@@ -1,0 +1,16 @@
+[package]
+name = "cli"
+version = "0.4.1-custom"
+authors = ["Ulysse Carion <ulysse@segment.com>"]
+edition = "2021"
+
+[[bin]]
+name = "ospv"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "2.33.3", features = ["yaml"] }
+schemas = { path = "../schemas" }
+serde = { version = "1.0.140", features = ["derive"] }
+serde_json = "1.0"
+spv_to_ospv = { path = "../spv_to_ospv" }

@@ -1,0 +1,188 @@
+{
+  "definitions": {
+    "StorageClassRef": {
+      "enum": [
+        "UniformConstant",
+        "Input",
+        "Uniform",
+        "Output",
+        "Workgroup",
+        "CrossWorkgroup",
+        "Private",
+        "Function",
+        "Generic",
+        "PushConstant",
+        "AtomicCounter",
+        "Image",
+        "StorageBuffer",
+        "CallableDataNV",
+        "IncomingCallableDataNV",
+        "RayPayloadNV",
+        "HitAttributeNV",
+        "IncomingRayPayloadNV",
+        "ShaderRecordBufferNV",
+        "PhysicalStorageBuffer",
+        "CodeSectionINTEL"
+      ]
+    },
+
+    "ImageFormatRef": {
+      "enum": [
+        "Unknown",
+        "Rgba32f",
+        "Rgba16f",
+        "R32f",
+        "Rgba8",
+        "Rgba8Snorm",
+        "Rg32f",
+        "Rg16f",
+        "R11fG11fB10f",
+        "R16f",
+        "Rgba16",
+        "Rgb10A2",
+        "Rg16",
+        "Rg8",
+        "R16",
+        "R8",
+        "Rgba16Snorm",
+        "Rg16Snorm",
+        "Rg8Snorm",
+        "R16Snorm",
+        "R8Snorm",
+        "Rgba32i",
+        "Rgba16i",
+        "Rgba8i",
+        "R32i",
+        "Rg32i",
+        "Rg16i",
+        "Rg8i",
+        "R16i",
+        "R8i",
+        "Rgba32ui",
+        "Rgba16ui",
+        "Rgba8ui",
+        "R32ui",
+        "Rgb10a2ui",
+        "Rg32ui",
+        "Rg16ui",
+        "Rg8ui",
+        "R16ui",
+        "R8ui",
+        "R64ui",
+        "R64i"
+      ]
+    },
+
+    "ConstantValues": {
+      "discriminator": "type",
+      "mapping": {
+        "Int32": { "properties": { "value": { "type": "int32" } } },
+        "Int64": { "properties": { "high": { "type": "int32" }, "low": { "type": "int32" } } },
+        "Float32": { "properties": { "value": { "type": "float32" } } },
+        "Float64": { "properties": { "value": { "type": "float64" } } },
+        "Bool": { "properties": { "value": { "type": "boolean" } } },
+        "Null": { "properties": {} }
+      }
+    },
+
+    "Image": {
+      "properties": {
+        "dim": { "enum": [ "Dim1D", "Dim2D", "Dim3D", "DimCube", "DimRect", "DimBuffer", "DimSubpassData" ] },
+        "depth": { "enum": [ "NotDepth", "Depth", "Unknown" ] },
+        "arrayed": { "type": "boolean" },
+        "multisampled": { "type": "boolean" },
+        "sampled": { "enum": [ "RunTime", "Sampler", "NoSampler" ] },
+        "format": { "ref": "ImageFormatRef" }
+      }
+    },
+
+    "Type": {
+      "discriminator": "type",
+      "mapping": {
+        "Bool": { "properties": { } },
+        "Void": { "properties": { } },
+        "Float": { "properties": { "size": { "type": "uint8" } } },
+        "Int": { "properties": { "size": { "type": "uint8" }, "signed": { "type": "boolean" } } },
+        "Vector": { "properties": { "size": { "type": "uint8" }, "ref": { "type": "uint32" } } },
+        "Matrix": { "properties": { "size": { "type": "uint8" }, "ref": { "type": "uint32" } } },
+        "Struct": { "properties": { "refs": { "elements": { "type": "uint32" } } } },
+        "Pointer": { "properties": { "ref": { "type": "uint32" }, "class": { "ref": "StorageClassRef" } } },
+        "Array": { "properties": { "size": { "type": "uint32" }, "ref": { "type": "uint32" } } },
+        "RuntimeArray": { "properties": { "ref": { "type": "uint32" } } },
+        "Image": { "properties": { "ref": { "type": "uint32" }, "image": { "ref": "Image" } } },
+        "Sampler": { "properties": { } },
+        "SampledImage": { "properties": { "ref": { "type": "uint32" } } },
+        "SpecConstantBool": { "properties": { "value": { "type": "boolean" } } },
+        "SpecConstant": { "properties": { "ref": { "type": "uint32" }, "value": { "ref": "ConstantValues" } } },
+        "Variable": { "properties": { "ref": { "type": "uint32" }, "class": { "ref": "StorageClassRef" } } },
+        "AccelerationStructure": { "properties": { } },
+        "Unknown": { "properties": { } }
+      }
+    },
+
+    "ExecutionModel": {
+      "enum": [
+        "Vertex",
+        "TessellationControl",
+        "TessellationEvaluation",
+        "Geometry",
+        "Fragment",
+        "GLCompute",
+        "Kernel",
+        "TaskNV",
+        "MeshNV",
+        "RayGenerationNV",
+        "IntersectionNV",
+        "AnyHitNV",
+        "ClosestHitNV",
+        "MissNV",
+        "CallableNV"
+      ]
+    },
+
+    "ExecModel": {
+      "properties": {
+        "name": { "type": "string" },
+        "parameters": { "elements": { "type": "uint32" } },
+        "model": { "ref": "ExecutionModel" }
+      }
+    },
+
+    "VarDecoration": {
+      "optionalProperties": {
+        "name": { "type": "string" },
+        "set_bind": { "properties": { "set": { "type": "uint32" }, "binding": { "type": "uint32" } } },
+        "spec_id": { "type": "uint32" },
+        "location": { "type": "uint32" },
+        "block_type": { "enum": [ "Block", "BufferBlock" ] },
+        "relaxed_precision": { "type": "boolean" },
+        "matrix": {
+          "discriminator": "major",
+          "mapping": {
+            "Row": { "properties": { "value": { "type": "uint32" } } },
+            "Column": { "properties": { "value": { "type": "uint32" } } }
+          }
+        },
+        "array_stride": { "type": "uint32" },
+        "offset": { "type": "uint32" },
+        "visibility": { "enum": [ "ReadOnly", "WriteOnly" ] }
+      }
+    },
+
+    "StructuralDecoration": {
+      "properties": {
+        "decoration": { "ref": "VarDecoration" }
+      },
+      "optionalProperties": {
+        "members": { "elements": { "ref": "VarDecoration" } }
+      }
+    }
+  },
+
+  "properties": {
+    "source_file": { "type": "string" },
+    "entries": { "elements": { "ref": "ExecModel" } },
+    "decoration": { "values": { "ref": "StructuralDecoration" } },
+    "types": { "elements": { "ref": "Type" } }
+  }
+}

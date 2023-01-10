@@ -1,0 +1,6 @@
+{
+  "properties": {
+    "shaderCompilation": { "elements": { "type": "string" } },
+    "pipeline": { "elements": { "type": "string" } }
+  }
+}

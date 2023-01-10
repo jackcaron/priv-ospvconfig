@@ -1,0 +1,10 @@
+[package]
+name = "spv_to_ospv"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+rspirv = "0.11.0+1.5.4"
+schemas = { "path" = "../schemas" }
+serde = { version = "1.0.140", features = ["derive"] }
+serde_json = "1.0"
