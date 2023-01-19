@@ -1,0 +1,10 @@
+name: ospvc
+args:
+  - release:
+      help: Release mode
+      required: false
+  - input:
+      help: alternate location for spvconfig.json
+      long: input
+      short: i
+      takes_value: true
