@@ -1,18 +1,11 @@
 use rspirv::dr::{ Instruction, Operand };
 use rspirv::spirv::{ Dim, ImageFormat, Op, StorageClass, Word };
-use schemas::ospv::{
-  ConstantValues, ConstantValuesFloat32, ConstantValuesFloat64, ConstantValuesInt32, ConstantValuesInt64,
-  Image, ImageDepth, ImageDim, ImageFormatRef, ImageSampled,
-  StorageClassRef,
-  Type, TypeAccelerationStructure, TypeArray, TypeBool, TypeFloat, TypeImage,
-  TypeInt, TypeMatrix, TypePointer, TypeRuntimeArray, TypeSampledImage, TypeSampler,
-  TypeSpecConstant, TypeSpecConstantBool, TypeStruct, TypeUnknown, TypeVector, TypeVoid
-};
+use schemas::ospv::{ * };
 
 //-----------------------------------------------------
 type ByteSize = u8;
 
-pub fn get_id_ref(op: &Operand) -> Word {
+pub(crate) fn get_id_ref(op: &Operand) -> Word {
   if let Operand::IdRef(val) = *op { val } else { 0 }
 }
 
@@ -151,7 +144,7 @@ fn extract_storage_class(class: StorageClass) -> StorageClassRef {
 }
 
 //-----------------------------------------------------
-pub fn extract_type(inst: &Instruction) -> Type {
+pub(crate) fn extract_type(inst: &Instruction) -> Type {
   match inst.class.opcode {
     Op::TypeVoid => Type::Void(TypeVoid {}),
     Op::TypeBool => Type::Bool(TypeBool {}),

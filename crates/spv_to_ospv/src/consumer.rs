@@ -1,12 +1,18 @@
 
-use rspirv::binary::{ Consumer, ParseAction };
+use rspirv::binary::{ Consumer, ParseAction, Parser };
 use rspirv::dr::{ Instruction, ModuleHeader, Operand };
 use rspirv::spirv::{ ExecutionModel, Op, Word };
 use schemas::ospv::{ ExecModel, ExecutionModel as ExecutionModelRef, Ospv, StructuralDecoration, Type };
+use schemas::io::read_file;
 use std::collections::HashMap;
+use std::ffi::OsString;
+use std::io::{ Error, ErrorKind };
 
 use crate::builder::{ OspvBuilder };
-use crate::decoration::{ default_structural_decoration, struct_decore_apply_decoration, struct_decore_apply_member_decoration, struct_decore_set_member_name, struct_decore_set_name };
+use crate::decoration::{
+  struct_decore_apply_decoration,
+  struct_decore_apply_member_decoration
+};
 use crate::types::{ extract_type, get_id_ref };
 
 //-----------------------------------------------------
@@ -39,14 +45,14 @@ fn get_exec_model(inst: &Instruction) -> ExecModel {
 }
 
 //-----------------------------------------------------
-pub struct SpvConsumer {
+struct SpvConsumer {
   type_map: HashMap<Word, Type>,
   decoration_map: HashMap<Word, StructuralDecoration>,
   exec_models: Vec<ExecModel>
 }
 
 impl SpvConsumer {
-  pub fn new() -> SpvConsumer {
+  fn new() -> SpvConsumer {
     SpvConsumer {
       type_map: HashMap::new(),
       decoration_map: HashMap::new(),
@@ -55,26 +61,26 @@ impl SpvConsumer {
   }
 
   fn create_or_get_decoration(&mut self, id: Word) -> &mut StructuralDecoration {
-    self.decoration_map.entry(id).or_insert_with(default_structural_decoration)
+    self.decoration_map.entry(id).or_insert_with(StructuralDecoration::default)
   }
 
-  fn consume_decoration(&mut self, inst: &Instruction) {
+  fn consume_decoration(&mut self, inst: &Instruction) -> ParseAction {
     let id = get_id_ref(&inst.operands[0]);
     if id == 0 {
-      return;
+      return ParseAction::Continue;
     }
 
     let struct_deco = self.create_or_get_decoration(id);
     match inst.class.opcode {
       Op::Name => {
         if let Operand::LiteralString(name) = &inst.operands[1] {
-          struct_decore_set_name(struct_deco, name);
+          struct_deco.set_name(name);
         }
       },
       Op::MemberName => {
         if let Operand::LiteralInt32(idx) = &inst.operands[1] {
           if let Operand::LiteralString(name) = &inst.operands[2] {
-            struct_decore_set_member_name(struct_deco, *idx, name);
+            struct_deco.set_member_name(*idx, name);
           }
         }
       },
@@ -88,9 +94,10 @@ impl SpvConsumer {
       },
       _ => {}
     };
+    ParseAction::Continue
   }
 
-  pub fn to_ospv(&self, file: &str) -> Ospv {
+  fn to_ospv(&self, file: &str) -> Ospv {
     let mut builder = OspvBuilder::new(file)
             .add_types(&self.type_map)
             .add_entries(&self.exec_models);
@@ -130,7 +137,22 @@ impl Consumer for SpvConsumer {
       return ParseAction::Continue;
     }
 
-    self.consume_decoration(&inst);
-    ParseAction::Continue
+    self.consume_decoration(&inst)
+  }
+}
+
+//-----------------------------------------------------
+pub fn spv_to_ospv(file_name: &OsString) -> std::io::Result<Ospv> {
+  let buffer = read_file(file_name)?;
+
+  let mut consumer = SpvConsumer::new();
+  let res = Parser::new(&buffer, &mut consumer).parse();
+  match res {
+    Err(err) => {
+      Err(Error::new(ErrorKind::Other, err.to_string()))
+    },
+    Ok(_) => {
+      Ok(consumer.to_ospv(file_name.to_str().unwrap()))
+    }
   }
 }

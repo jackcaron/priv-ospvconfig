@@ -4,7 +4,6 @@ use schemas::ospv::{
   StructuralDecoration,
   Type, TypeRuntimeArray, TypeSampledImage, TypeStruct
 };
-
 use std::collections::{ HashMap };
 
 //-----------------------------------------------------
@@ -18,7 +17,7 @@ fn default_ospv(filename: &str) -> Ospv {
 }
 
 //-----------------------------------------------------
-pub struct OspvBuilder {
+pub(crate) struct OspvBuilder {
   type_hash: HashMap<u32, u32>,
   ospv: Ospv
 }

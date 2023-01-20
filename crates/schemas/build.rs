@@ -24,7 +24,13 @@ fn generate_schema(filename: &str) {
 
 fn write_schemas_mod(mods: &[&str]) -> std::io::Result<()> {
   let mut file = fs::File::create("src/lib.rs")?;
-  file.write_all("// generated \n\npub mod io;\n".as_bytes())?;
+  file.write_all("// generated \n\n".as_bytes())?;
+
+  for m in ["io", "extend"] {
+    file.write_all(format!("pub mod {};\n", m).as_bytes())?
+  }
+
+  file.write_all("\n".as_bytes())?;
 
   for m in mods {
     file.write_all(format!("pub mod {};\n", m).as_bytes())?
