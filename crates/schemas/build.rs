@@ -26,7 +26,7 @@ fn write_schemas_mod(mods: &[&str]) -> std::io::Result<()> {
   let mut file = fs::File::create("src/lib.rs")?;
   file.write_all("// generated \n\n".as_bytes())?;
 
-  for m in ["io", "extend"] {
+  for m in ["extend", "io", "spv_validate"] {
     file.write_all(format!("pub mod {};\n", m).as_bytes())?
   }
 

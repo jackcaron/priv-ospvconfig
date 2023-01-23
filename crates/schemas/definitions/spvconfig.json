@@ -1,6 +1,37 @@
 {
+  "definitions": {
+    "IoFormat": {
+      "discriminator": "format",
+      "mapping": {
+        "Empty": { "properties": {} },
+        "Prefix": { "properties": { "prefix": { "type": "string" } } },
+        "Format": { "properties": { "format": { "type": "string" } } }
+      }
+    },
+
+    "Compiler": {
+      "properties": {
+        "name": { "type": "string" },
+        "executable": { "type": "string" },
+        "input": { "ref": "IoFormat" },
+        "output": { "ref": "IoFormat" },
+        "spawn": { "type": "string" }
+      },
+      "optionalProperties": {
+        "options": { "type": "string" },
+        "debug_options": { "type": "string" },
+        "release_options": { "type": "string" }
+      }
+    }
+  },
+
   "properties": {
-    "shaderCompilation": { "elements": { "type": "string" } },
-    "pipeline": { "elements": { "type": "string" } }
+    "work_dir": { "type": "string" },
+    "target_dir": { "type": "string" }
+  },
+  "optionalProperties": {
+    "compilers": {
+      "elements": { "ref": "Compiler" }
+    }
   }
 }
