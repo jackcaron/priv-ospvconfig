@@ -1,7 +1,7 @@
 {
   "definitions": {
     "IoFormat": {
-      "discriminator": "format",
+      "discriminator": "type",
       "mapping": {
         "Empty": { "properties": {} },
         "Prefix": { "properties": { "prefix": { "type": "string" } } },
@@ -22,12 +22,22 @@
         "debug_options": { "type": "string" },
         "release_options": { "type": "string" }
       }
+    },
+
+    "Path": {
+      "properties": {
+        "name": { "type": "string" },
+        "dir": { "type": "string" }
+      }
     }
   },
 
   "properties": {
     "work_dir": { "type": "string" },
-    "target_dir": { "type": "string" }
+    "target_dir": { "type": "string" },
+    "paths": {
+      "elements": { "ref": "Path" }
+    }
   },
   "optionalProperties": {
     "compilers": {

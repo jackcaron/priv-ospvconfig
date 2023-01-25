@@ -20,6 +20,11 @@ fn get_spv_config_path(matches: &ArgMatches) -> io::Result<OsString> {
 fn load_spvconfig(matches: &ArgMatches) -> io::Result<Spvconfig> {
   let config_dir = get_spv_config_path(matches)?;
 
+  if !path::Path::new(config_dir.as_os_str()).exists() {
+    eprintln!("ERROR:\n  cannot find {}\n", config_dir.to_str().unwrap());
+    std::process::exit(1);
+  }
+
   Spvconfig::from_file(&config_dir)
 }
 

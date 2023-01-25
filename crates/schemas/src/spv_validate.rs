@@ -1,6 +1,8 @@
-use crate::spvconfig::{ Compiler, IoFormat, IoFormatFormat, IoFormatPrefix };
+use crate::spvconfig::{ Compiler, IoFormat, IoFormatFormat, IoFormatPrefix, Path, Spvconfig };
 
-type CompilerResult = Result<(), String>;
+use std::collections::HashMap;
+
+type ValidationResult = Result<(), String>;
 
 pub enum BuildTarget {
   Debug,
@@ -8,7 +10,7 @@ pub enum BuildTarget {
 }
 
 //-----------------------------------------------------
-fn require_single_pattern(data: &String, patt: &str) -> CompilerResult {
+fn require_single_pattern(data: &String, patt: &str) -> ValidationResult {
   match data.as_str().matches(patt).count() {
     0 => Err(format!("missing '{}'", patt)),
     1 => Ok(()),
@@ -16,7 +18,7 @@ fn require_single_pattern(data: &String, patt: &str) -> CompilerResult {
   }
 }
 
-fn at_most_one_pattern(data: &String, patt: &str) -> CompilerResult {
+fn at_most_one_pattern(data: &String, patt: &str) -> ValidationResult {
   match data.as_str().matches(patt).count() {
     0 |
     1 => Ok(()),
@@ -26,17 +28,17 @@ fn at_most_one_pattern(data: &String, patt: &str) -> CompilerResult {
 
 //-----------------------------------------------------
 impl IoFormatFormat {
-  fn validate(&self) -> CompilerResult {
-    require_single_pattern(&self.format0, "{}").map_err(|x| { format!("format {}", x) })
+  fn validate(&self) -> ValidationResult {
+    require_single_pattern(&self.format, "{}").map_err(|x| { format!("format {}", x) })
   }
 
   fn format(&self, file_name: &str) -> String {
-    self.format0.replace("{}", file_name)
+    self.format.replace("{}", file_name)
   }
 }
 
 impl IoFormatPrefix {
-  fn validate(&self) -> CompilerResult {
+  fn validate(&self) -> ValidationResult {
     match self.prefix.is_empty() {
       false => Ok(()),
       true => Err("prefix is empty".to_string())
@@ -49,11 +51,11 @@ impl IoFormatPrefix {
 }
 
 impl IoFormat {
-  fn validate(&self) -> CompilerResult {
+  fn validate(&self) -> ValidationResult {
     match self {
       IoFormat::Empty(_) => Ok(()),
       IoFormat::Prefix(p) => p.validate(),
-      IoFormat::Format0(f) => f.validate()
+      IoFormat::Format(f) => f.validate()
     }
   }
 
@@ -61,7 +63,7 @@ impl IoFormat {
     match self {
       IoFormat::Empty(_) => file_name.to_string(),
       IoFormat::Prefix(p) => p.format(file_name),
-      IoFormat::Format0(f) => f.format(file_name)
+      IoFormat::Format(f) => f.format(file_name)
     }
   }
 }
@@ -71,7 +73,7 @@ fn spawn_err(msg: String) -> String {
   format!("spawn {}", msg)
 }
 
-fn check_spawn(spawn: &String) -> CompilerResult {
+fn check_spawn(spawn: &String) -> ValidationResult {
   if spawn.is_empty() {
     return Err(spawn_err("is_empty".to_string()));
   }
@@ -109,7 +111,7 @@ impl Compiler {
     ).replace("{options}", spawn_option(&self.options).as_str())
   }
 
-  pub fn validate(&self) -> CompilerResult {
+  pub fn validate(&self) -> ValidationResult {
     if self.name.is_empty() {
       return Err("compiler has empty name".to_string());
     }
@@ -146,3 +148,60 @@ impl Compiler {
   }
 }
 
+//-----------------------------------------------------
+impl Path {
+  pub fn validate(&self) -> ValidationResult {
+    if self.name.is_empty() {
+      Err("has empty name".to_string())
+    }
+    else if self.dir.is_empty() {
+      Err("has empty directory".to_string())
+    }
+    else {
+      Ok(())
+    }
+  }
+}
+
+fn validate_paths(paths: &Vec<Path>) -> ValidationResult {
+  if paths.is_empty() {
+    return Err("there's no paths listed".to_string());
+  }
+
+  let mut unique_names: HashMap<String, usize> = HashMap::new();
+
+  for (idx, path) in paths.into_iter().enumerate() {
+    path.validate().map_err(|x| format!("path {} {}", idx, x))?;
+
+    if let Some(idx2) = unique_names.get(&path.name) {
+      return Err(format!("paths {} and {} both uses the same name {}", idx, idx2, path.name));
+    }
+    else {
+      unique_names.insert(path.name.clone(), idx);
+    }
+  }
+  Ok(())
+}
+
+//-----------------------------------------------------
+impl Spvconfig {
+  pub fn validate(&self) -> ValidationResult {
+    if self.target_dir.is_empty() {
+      return Err("'target_dir' is empty".to_string());
+    }
+
+    if self.work_dir.is_empty() {
+      return Err("'work_dir' is empty".to_string());
+    }
+
+    validate_paths(&self.paths)?;
+
+    if let Some(box_comps) = &self.compilers {
+      for comp in box_comps.as_ref() {
+        comp.validate()?;
+      }
+    }
+
+    Ok(())
+  }
+}
