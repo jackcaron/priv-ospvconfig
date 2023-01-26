@@ -8,6 +8,6 @@ name = "ospv"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "2.33.3", features = ["yaml"] }
+clap = { version = "4.1.4", features = [ "cargo", "derive" ] }
 schemas = { path = "../schemas" }
 spv_to_ospv = { path = "../spv_to_ospv" }

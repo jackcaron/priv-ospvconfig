@@ -1,5 +1,5 @@
 
-use clap::{ crate_version, load_yaml, App, ArgMatches };
+use clap::{ crate_version, Parser };
 use schemas::spvconfig::Spvconfig;
 use std::env;
 use std::ffi::OsString;
@@ -7,8 +7,14 @@ use std::io;
 use std::path;
 
 //-----------------------------------------------------
-fn get_spv_config_path(matches: &ArgMatches) -> io::Result<OsString> {
-  if let Some(dir) = matches.value_of("input") {
+fn exit_with_err(msg: String) {
+  eprintln!("ERROR:\n  {}\n", msg);
+  std::process::exit(1);
+}
+
+//-----------------------------------------------------
+fn get_spv_config_path(input: &Option<String>) -> io::Result<OsString> {
+  if let Some(dir) = input {
     Ok(OsString::from(dir.to_string()))
   }
   else {
@@ -17,23 +23,38 @@ fn get_spv_config_path(matches: &ArgMatches) -> io::Result<OsString> {
   }
 }
 
-fn load_spvconfig(matches: &ArgMatches) -> io::Result<Spvconfig> {
-  let config_dir = get_spv_config_path(matches)?;
+fn load_spvconfig(input: &Option<String>) -> io::Result<Spvconfig> {
+  let config_dir = get_spv_config_path(input)?;
 
   if !path::Path::new(config_dir.as_os_str()).exists() {
-    eprintln!("ERROR:\n  cannot find {}\n", config_dir.to_str().unwrap());
-    std::process::exit(1);
+    exit_with_err(format!("cannot find {}", config_dir.to_str().unwrap()));
   }
 
   Spvconfig::from_file(&config_dir)
 }
 
 //-----------------------------------------------------
+#[derive(Parser, Debug)]
+#[command(name = "ospvconfig", version = crate_version!(), about = "ospvconfig compiler", long_about = None)]
+struct Cli {
+  /// location of "spvconfig.json" if not in current location, including file
+  input: Option<String>,
+
+  #[arg(short, long, default_value_t = false)]
+  /// compile in release mode
+  release: bool
+}
+
+//-----------------------------------------------------
 fn main() {
-  let cli_yaml = load_yaml!("cli.yaml");
-  let matches = App::from(cli_yaml).version(crate_version!()).get_matches();
+  let args = Cli::parse();
 
-  let spvconfig = load_spvconfig(&matches).unwrap();
+  println!(">>> release mode: {}", args.release);
 
-  // release: matches.is_present("release")
+  let spvconfig = match load_spvconfig(&args.input) {
+            Ok(data) => data,
+            Err(msg) => return exit_with_err(msg.to_string())
+          };
+
+  //
 }
